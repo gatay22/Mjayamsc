@@ -10,64 +10,49 @@ const bot = mineflayer.createBot({
 
 const namaOwner = 'rissdaym'; 
 
-// --- FITUR AUTO EAT DENGAN DELAY MANUSIA ---
-bot.on('health', () => {
-  if (bot.food < 15) { 
-    console.log('MieAyam: Lapar nih, mau makan tapi santai dulu...');
-    
-    // Jeda 2 detik sebelum mulai cari roti (biar gak instan)
-    setTimeout(() => {
-      const roti = bot.inventory.items().find(item => item.name.includes('bread'))
-      
-      if (roti) {
-        // Jeda lagi sebelum pegang roti
-        setTimeout(() => {
-          bot.equip(roti, 'hand', (err) => {
-            if (!err) {
-              console.log('MieAyam: Sudah pegang roti, nunggu bentar baru makan...');
-              // Jeda lagi 2 detik sebelum benar-benar makan
-              setTimeout(() => {
-                bot.eat((eatErr) => {
-                  if (!eatErr) console.log('MieAyam: Kenyang, Alhamdulillah.');
-                });
-              }, 2000);
-            }
-          });
-        }, 2000);
-      }
-    }, 2000);
-  }
-});
-
-// --- PROSES LOGIN ---
-bot.on('spawn', () => {
-  console.log('--- BOT MIEAYAM ONLINE (DELAY MODE) ---');
+// --- FITUR AUTO RESPAWN & BALIK KE HOME ---
+bot.on('death', () => {
+  console.log('MieAyam mati! Mencoba hidup kembali...');
   setTimeout(() => {
-    bot.chat('/register rizz rizz');
+    bot.respawn();
+  }, 3000); // Jeda 3 detik buat respawn
+});
+
+// --- SETIAP KALI BOT MUNCUL (SPAWN/RESPAWN) ---
+bot.on('spawn', () => {
+  console.log('--- BOT MIEAYAM MASUK ---');
+  
+  // Kasih jeda biar posisi stabil dulu di server
+  setTimeout(() => {
+    // 1. Login dulu biar bisa ngetik perintah
+    bot.chat('/login rizz');
+    
+    // 2. Tunggu 3 detik baru ngetik /home
     setTimeout(() => {
-      bot.chat('/login rizz');
-    }, 3000); // Jeda login diperlama
-  }, 5000);
+      bot.chat('/home');
+      console.log('MieAyam: OTW balik ke home...');
+    }, 3000);
+    
+  }, 7000);
 });
 
-// --- AUTO TPA ---
-bot.on('message', (message) => {
-  const chat = message.toString();
-  if (chat.includes(namaOwner) && (chat.toLowerCase().includes('joined') || chat.toLowerCase().includes('masuk'))) {
-    setTimeout(() => { 
-        bot.chat(`/tpa ${namaOwner}`); 
-        console.log('Mengirim TPA ke Owner...');
-    }, 7000); // Delay TPA diperlama biar gak spam
-  }
-});
-
-// --- PERINTAH !sini ---
+// --- PERINTAH MANUAL DARI OWNER ---
 bot.on('chat', (username, message) => {
-  if (username === namaOwner && message === '!sini') {
-    bot.chat(`/tpa ${namaOwner}`);
+  if (username === namaOwner) {
+    if (message === '!home') {
+      bot.chat('/home');
+    }
+    if (message === '!sethome') {
+      bot.chat('/sethome');
+      bot.chat('Sudah saya sethome di sini bos!');
+    }
+    if (message === '!sini') {
+      bot.chat(`/tpa ${namaOwner}`);
+    }
   }
 });
 
+// Log biar kita tau kalau ada masalah
 bot.on('error', (err) => console.log('Error:', err.code));
 bot.on('kicked', (reason) => console.log('Kick:', reason));
-bot.on('end', () => console.log('Koneksi terputus.'));
+bot.on('end', () => console.log('Koneksi putus...'));
