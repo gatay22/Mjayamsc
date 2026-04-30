@@ -5,54 +5,62 @@ const bot = mineflayer.createBot({
   port: 25565,
   username: 'MieAyam',
   auth: 'offline',
-  version: "1.21" 
+  version: "1.21"
 })
 
 const namaOwner = 'rissdaym'; 
 
-// --- FITUR AUTO RESPAWN & BALIK KE HOME ---
-bot.on('death', () => {
-  console.log('MieAyam mati! Mencoba hidup kembali...');
-  setTimeout(() => {
-    bot.respawn();
-  }, 3000); // Jeda 3 detik buat respawn
-});
+// --- FUNGSI NGETIK PELAN (TYPEWRITER EFFECT) ---
+async function ngetik(pesan) {
+  let teks = "";
+  for (const huruf of pesan) {
+    teks += huruf;
+    // Jeda antar huruf (100-200ms) biar kayak ngetik beneran
+    await new Promise(res => setTimeout(res, Math.random() * 100 + 100));
+  }
+  bot.chat(teks);
+}
 
-// --- SETIAP KALI BOT MUNCUL (SPAWN/RESPAWN) ---
 bot.on('spawn', () => {
-  console.log('--- BOT MIEAYAM MASUK ---');
+  // Matikan fisika biar nggak kena kick movement
+  bot.physicsEnabled = false; 
+  console.log('--- MIEAYAM STANDBY (TUNGGU PERINTAH OWNER) ---');
   
-  // Kasih jeda biar posisi stabil dulu di server
-  setTimeout(() => {
-    // 1. Login dulu biar bisa ngetik perintah
-    bot.chat('/login rizz');
-    
-    // 2. Tunggu 3 detik baru ngetik /home
-    setTimeout(() => {
-      bot.chat('/home');
-      console.log('MieAyam: OTW balik ke home...');
-    }, 3000);
-    
+  // Login otomatis tetap pake ngetik pelan setelah 7 detik join
+  setTimeout(async () => {
+    await ngetik('/login rizz');
   }, 7000);
 });
 
-// --- PERINTAH MANUAL DARI OWNER ---
-bot.on('chat', (username, message) => {
-  if (username === namaOwner) {
-    if (message === '!home') {
-      bot.chat('/home');
-    }
-    if (message === '!sethome') {
-      bot.chat('/sethome');
-      bot.chat('Sudah saya sethome di sini bos!');
-    }
-    if (message === '!sini') {
-      bot.chat(`/tpa ${namaOwner}`);
-    }
+// --- RESPON CHAT OWNER ---
+bot.on('chat', async (username, message) => {
+  if (username !== namaOwner) return;
+
+  // Jika kamu ngetik "mBuD", bot bakal respon
+  if (message === 'mBuD') {
+    console.log('Owner panggil mBuD, proses TPA...');
+    
+    // Kasih jeda 2 detik sebelum mulai ngetik TPA
+    setTimeout(async () => {
+      await ngetik(`/tpa ${namaOwner}`);
+    }, 2000);
+  }
+
+  // Tambahan perintah manual lainnya
+  if (message === '!home') {
+    setTimeout(async () => { await ngetik('/home'); }, 1000);
+  }
+  
+  if (message === '!sethome') {
+    setTimeout(async () => { await ngetik('/sethome'); }, 1000);
   }
 });
 
-// Log biar kita tau kalau ada masalah
+// Auto Respawn
+bot.on('death', () => {
+  setTimeout(() => { bot.respawn(); }, 5000);
+});
+
 bot.on('error', (err) => console.log('Error:', err.code));
-bot.on('kicked', (reason) => console.log('Kick:', reason));
-bot.on('end', () => console.log('Koneksi putus...'));
+bot.on('kicked', (reason) => console.log('Kick:', JSON.stringify(reason)));
+bot.on('end', () => console.log('Koneksi terputus.'));
